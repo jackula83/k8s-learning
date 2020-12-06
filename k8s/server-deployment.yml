@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      component: server
+  template:
+    metadata:
+      labels:
+        component: server
+    spec:
+      containers:
+        - name: server
+          image: jackula83/multi-server
+          ports:
+            - containerPort: 5000
+          env:
+            - name: REDIS_HOST
+              value: redis-cluster-ip-service
+            - name: REDIS_PORT
+              value: '6379'
+            - name: PGUSER
+              value: postgres
+            - name: PGHOST
+              value: postgres-cluster-ip-service
+            - name: PGPORT
+              value: '5432'
+            - name: PGDATABASE
+              value: postgres
+            - name: PGPASSWORD
+              # valueFrom gets the value from another source, instead of hard coded
+              valueFrom:
+                secretKeyRef:
+                  # from kubernetes secrets
+                  name: pgpassword
+                  # doesn't have to be the same as name above, this is coincidence
+                  # PGPASSWORD name is referenced by the application and key was
+                  # the key of the secret value pair.
+                  key: PGPASSWORD

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  # also the host name, i.e. http://redis-cluster-ip-service
+  name: redis-cluster-ip-service
+spec:
+  type: ClusterIP
+  selector:
+    component: redis
+  ports:
+    - port: 6379
+      targetPort: 6379
