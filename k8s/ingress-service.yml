@@ -6,9 +6,19 @@ metadata:
     kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/use-regex: 'true'
     nginx.ingress.kubernetes.io/rewrite-target: /$1
+    cert-manager.io/cluster-issuer: 'letsencrypt-prod'
+    # divert all traffic to https
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
 spec:
+  tls:
+    - hosts:
+        - complex.geekmotors.com
+      secretName: complex-geekmotors-com
   rules:
-    - http:
+    # specify host, note for root www there will need to be a separate element in the rule array
+    # www is considered a different host to geekmotors.com
+    - host: complex.geekmotors.com
+      http:
         paths:
           - path: /?(.*)
             backend:
