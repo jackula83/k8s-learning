@@ -1,0 +1,15 @@
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: complex-geekmotors-com-tls
+spec:
+  secretName: complex-geekmotors-com
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: complex.geekmotors.com
+  # domains covered by the cert
+  dnsNames:
+    # - geekmotors.com
+    # - www.geekmotors.com
+    - complex.geekmotors.com
