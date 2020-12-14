@@ -48,8 +48,7 @@ jobs:
       # Apply all k8s config files
       - run:
           name: ApplyK8sConfig
-          command: |
-            sudo kubectl apply -f k8s
+          command: kubectl apply -f k8s
       - run: echo $CIRCLE_BUILD_NUM
       # Update a deployment Docker images.
       - gcp-gke/rollout-image:
