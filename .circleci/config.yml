@@ -5,17 +5,18 @@ orbs:
   gcr: circleci/gcp-gcr@0.0.2
 jobs:
   build:
-    docker:
-      - image: jackula83/multi-client
-      - image: jackula83/multi-server
-      - image: jackula83/multi-worker
-        # auth:
-        #   username: jackula83
-        #   password: $DOCKERHUB_PASSWORD
+    machine: true
+    # docker:
+    #   - image: jackula83/multi-client
+    #   - image: jackula83/multi-server
+    #   - image: jackula83/multi-worker
+    # auth:
+    #   username: jackula83
+    #   password: $DOCKERHUB_PASSWORD
     steps:
       - checkout
-      - setup_remote_docker:
-          version: 19.03.13
+      # - setup_remote_docker:
+      #     version: 19.03.13
       # build and push Docker image
       - run:
           name: BuildPushDockerImages
