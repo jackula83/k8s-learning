@@ -49,16 +49,22 @@ jobs:
       - run:
           name: ApplyK8sConfig
           command: |
-            gcloud config set project $GOOGLE_PROJECT_ID
-            gcloud config set compute/zone $GOOGLE_COMPUTE_ZONE
             gcloud container clusters get-credentials vortex-cluster
             kubectl apply -f k8s
       - run: echo $CIRCLE_BUILD_NUM
       # Update a deployment Docker images.
       - gcp-gke/rollout-image:
-          deployment: server-deployment
+          deployment: client-deployment
           container: client
-          image: jackula83/multi-client:$CIRCLE_BUILD_NUM # change version when updating
+          image: jackula83/multi-client:$CIRCLE_BUILD_NUM
+      - gcp-gke/rollout-image:
+          deployment: server-deployment
+          container: server
+          image: jackula83/multi-server:$CIRCLE_BUILD_NUM
+      - gcp-gke/rollout-image:
+          deployment: worker-deployment
+          container: worker
+          image: jackula83/multi-worker:$CIRCLE_BUILD_NUM
 workflows:
   build_update_deploy:
     jobs:
