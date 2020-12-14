@@ -21,6 +21,7 @@ jobs:
       - run:
           name: BuildPushDockerImages
           command: |
+            echo $CIRCLE_BUILD_NUM
             docker build -t jackula83/multi-client:latest -t jackula83/multi-client:$CIRCLE_BUILD_NUM ./client
             docker build -t jackula83/multi-server:latest -t jackula83/multi-server:$CIRCLE_BUILD_NUM ./server
             docker build -t jackula83/multi-worker:latest -t jackula83/multi-worker:$CIRCLE_BUILD_NUM ./worker
@@ -35,11 +36,17 @@ jobs:
     description: Deploy application to Google Kubernetes Engine
     machine: true
     steps:
+      - checkout
       # Install `gcloud` and `kubectl` if not already installed.
       - gcp-gke/install
       # Initialize the `gcloud` CLI.
       - gcp-gke/init
+      # Apply all k8s config files
+      - run:
+          name: ApplyK8sConfig
+          command: kubectl apply -f k8s
       # Update a deployment Docker image.
+      - run: echo $CIRCLE_BUILD_NUM
       - gcp-gke/rollout-image:
           deployment: vortex-cluster
           container: multi-client
