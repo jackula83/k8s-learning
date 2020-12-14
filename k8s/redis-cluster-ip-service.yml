@@ -3,6 +3,7 @@ kind: Service
 metadata:
   # also the host name, i.e. http://redis-cluster-ip-service
   name: redis-cluster-ip-service
+  namespace: app
 spec:
   type: ClusterIP
   selector:
