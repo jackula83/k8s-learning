@@ -41,15 +41,23 @@ jobs:
       - gcp-gke/install
       # Initialize the `gcloud` CLI.
       - gcp-gke/init
+      # Disable prompts
+      - run:
+          name: SetupDeploymentEnvironment
+          command: echo 'export CLOUDSDK_CORE_DISABLE_PROMPTS=1' >> $BASH_ENV
       # Apply all k8s config files
       - run:
           name: ApplyK8sConfig
-          command: kubectl apply -f k8s
-      # Update a deployment Docker image.
+          command: |
+            sudo cp /etc/kubernetes/admin.conf $HOME/
+            sudo chown $(id -u):$(id -g) $HOME/admin.conf
+            export KUBECONFIG=$HOME/admin.conf
+            kubectl apply -f k8s
       - run: echo $CIRCLE_BUILD_NUM
+      # Update a deployment Docker images.
       - gcp-gke/rollout-image:
-          deployment: vortex-cluster
-          container: multi-client
+          deployment: server-deployment
+          container: client
           image: jackula83/multi-client:$CIRCLE_BUILD_NUM # change version when updating
 workflows:
   build_update_deploy:
