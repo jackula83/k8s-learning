@@ -1,0 +1,49 @@
+version: 2.1
+orbs:
+  node: circleci/node@1.0.1
+  gcp-gke: circleci/gcp-gke@0.1.0
+  gcr: circleci/gcp-gcr@0.0.2
+jobs:
+  build:
+    docker:
+      - image: jackula83/multi-client
+        auth:
+          username: jackula83
+          password: $DOCKERHUB_PASSWORD
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 19.03.13
+          docker_layer_caching: true
+      # build and push Docker image
+      - run: |
+          docker build -t jackula83/multi-client:latest -t jackula83/multi-client:$CIRCLE_BUILD_NUM ./client
+          docker build -t jackula83/multi-server:latest -t jackula83/multi-server:$CIRCLE_BUILD_NUM ./server
+          docker build -t jackula83/multi-worker:latest -t jackula83/multi-worker:$CIRCLE_BUILD_NUM ./worker
+          echo $DOCKERHUB_PASSWORD | docker login -u $DOCKER_USER --password-stdin docker.io
+          docker push jackula83/multi-client:latest
+          docker push jackula83/multi-server:latest
+          docker push jackula83/multi-worker:latest
+          docker push jackula83/multi-client:$CIRCLE_BUILD_NUM
+          docker push jackula83/multi-server:$CIRCLE_BUILD_NUM
+          docker push jackula83/multi-worker:$CIRCLE_BUILD_NUM
+  deploy:
+    description: Deploy application to Google Kubernetes Engine
+    machine: true
+    steps:
+      # Install `gcloud` and `kubectl` if not already installed.
+      - gcp-gke/install
+      # Initialize the `gcloud` CLI.
+      - gcp-gke/init
+      # Update a deployment Docker image.
+      - gcp-gke/rollout-image:
+          deployment: circle-ci-cluster
+          container: dominic-backend
+          image: jackula83/multi-client:$CIRCLE_BUILD_NUM # change version when updating
+workflows:
+  build_update_deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
