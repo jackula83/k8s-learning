@@ -27,6 +27,19 @@ commands:
       - run: |
           doctl kubernetes cluster kubeconfig save geekmotors-main-cluster
 
+executors:
+  digitalocean:
+    description: |
+      The official digitalocean docker container with doctl pre-installed
+    docker:
+      - image: digitalocean/doctl:<<parameters.sdk-version>>
+    parameters:
+      sdk-version:
+        default: latest
+        description: |
+          What version of the Doctl Docker image? For full options, see https://hub.docker.com/r/digitalocean/doctl/tags
+        type: string
+
 jobs:
   #   build:
   #     machine: true
@@ -61,7 +74,7 @@ jobs:
         description: The access token to connect DigitalOcean
         type: env_var_name
       executor:
-        default: default
+        default: digitalocean
         description: |
           Executor to use for this job. Defaults to this orb's default executor.
         type: executor
