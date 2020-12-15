@@ -9,10 +9,10 @@ commands:
   install:
     description: 'Install `doctl` and `kubectl` if not already installed.'
     steps:
-      - run:
-          command: |
-            wget http://security.ubuntu.com/ubuntu/pool/main/a/apt/apt_1.0.1ubuntu2.17_amd64.deb -O apt.deb
-            sudo dpkg -i apt.deb
+      # - run:
+      #     command: |
+      #       wget http://security.ubuntu.com/ubuntu/pool/main/a/apt/apt_1.0.1ubuntu2.17_amd64.deb -O apt.deb
+      #       sudo dpkg -i apt.deb
 
       - doctl/install
       - k8s/install
