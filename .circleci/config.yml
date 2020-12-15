@@ -85,12 +85,17 @@ jobs:
             kubectl set image deployment/client-deployment client=jackula83/multi-client:latest
             kubectl set image deployment/worker-deployment worker=jackula83/multi-worker:latest
 
-# workflows:
-#   build_update_deploy:
-#     jobs:
-#       # - build
-#       - install_and_initialize_cli
-#       - deploy:
-#           requires:
-#             - install_and_initialize_cli
-#         #   - build
+workflows:
+  pre_steps:
+    commands:
+      - install
+      - initialize
+
+  build_update_deploy:
+    jobs:
+      # - build
+      - install_and_initialize_cli
+      - deploy:
+          requires:
+            - install_and_initialize_cli
+        #   - build
