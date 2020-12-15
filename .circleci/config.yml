@@ -33,6 +33,25 @@ commands:
           doctl kubernetes cluster kubeconfig save geekmotors-main-cluster
 
 executors:
+  golang:
+    description: |
+      A debian based docker container to use when running the doctl
+    docker:
+      - image: circleci/golang:<<parameters.golang-version>>-<<parameters.debian-release>>
+    parameters:
+      debian-release:
+        default: stretch
+        description: |
+          Which Debian release?
+        enum:
+          - stretch
+          - jessie
+        type: enum
+      golang-version:
+        default: '1.11'
+        description: |
+          What version of Python? For full options, see https://hub.docker.com/r/circleci/python/tags
+        type: string
   digitalocean:
     description: |
       The official digitalocean docker container with doctl pre-installed
@@ -79,7 +98,7 @@ jobs:
         description: The access token to connect DigitalOcean
         type: env_var_name
       executor:
-        default: digitalocean
+        default: golang
         description: |
           Executor to use for this job. Defaults to this orb's default executor.
         type: executor
