@@ -66,6 +66,7 @@ jobs:
     executor: <<parameters.executor>>
     parameters:
       cluster:
+        default: geekmotors-main-env
         description: 'The Kubernetes cluster name.'
         type: string
       digitalocean-access-token:
