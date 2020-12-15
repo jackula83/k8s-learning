@@ -1,27 +1,99 @@
 version: 2.1
+description: DigitalOcean Kubernetes Engine Orb
+
 orbs:
-  node: circleci/node@1.0.1
-  gcp-gke: circleci/gcp-gke@0.1.0
-  gcr: circleci/gcp-gcr@0.0.2
+  doctl: digitalocean/cli@0.1.1
+  k8s: digitalocean/k8s@0.1.1
+
+commands:
+  install:
+    description: 'Install `doctl` and `kubectl` if not already installed.'
+    steps:
+      # - run:
+      #     command: |
+      #       wget http://security.ubuntu.com/ubuntu/pool/main/a/apt/apt_1.0.1ubuntu2.17_amd64.deb -O apt.deb
+      #       sudo dpkg -i apt.deb
+
+      - doctl/install
+      - k8s/install
+
+  initialize:
+    description: 'Initialize kubeconfig to connect to DigitalOcean Kubernetes Engine'
+    parameters:
+      cluster:
+        description: 'The Kubernetes cluster name.'
+        type: string
+      digitalocean-access-token:
+        default: DIGITALOCEAN_ACCESS_TOKEN
+        description: The access token to connect DigitalOcean
+        type: env_var_name
+    steps:
+      - doctl/initialize:
+          digitalocean-access-token: <<parameters.digitalocean-access-token>>
+      - run: |
+          doctl kubernetes cluster kubeconfig save geekmotors-main-cluster
+
+  deploy:
+    description: 'Deployment command'
+    steps:
+      - checkout
+
+      # Configure and apply all k8s config files
+      - run:
+          name: ApplyK8sConfig
+          command: |
+            kubectl apply -f k8s
+      - run: echo $CIRCLE_SHA1
+      # Update a deployment Docker images.
+      - run:
+          name: UpdateDeployments
+          command: |
+            kubectl set image deployment/server-deployment server=jackula83/multi-server:$CIRCLE_SHA1
+            kubectl set image deployment/client-deployment client=jackula83/multi-client:$CIRCLE_SHA1
+            kubectl set image deployment/worker-deployment worker=jackula83/multi-worker:$CIRCLE_SHA1
+
+executors:
+  golang:
+    description: |
+      A debian based docker container to use when running the doctl
+    docker:
+      - image: circleci/golang:<<parameters.golang-version>>-<<parameters.debian-release>>
+    parameters:
+      debian-release:
+        default: stretch
+        description: |
+          Which Debian release?
+        enum:
+          - stretch
+          - jessie
+        type: enum
+      golang-version:
+        default: '1.11'
+        description: |
+          What version of Python? For full options, see https://hub.docker.com/r/circleci/python/tags
+        type: string
+  digitalocean:
+    description: |
+      The official digitalocean docker container with doctl pre-installed
+    docker:
+      - image: digitalocean/doctl:<<parameters.sdk-version>>
+    parameters:
+      sdk-version:
+        default: latest
+        description: |
+          What version of the Doctl Docker image? For full options, see https://hub.docker.com/r/digitalocean/doctl/tags
+        type: string
+
 jobs:
   build:
     machine: true
-    # docker:
-    #   - image: jackula83/multi-client
-    #   - image: jackula83/multi-server
-    #   - image: jackula83/multi-worker
-    # auth:
-    #   username: jackula83
-    #   password: $DOCKERHUB_PASSWORD
     steps:
       - checkout
-      # - setup_remote_docker:
-      #     version: 19.03.13
       # build and push Docker image
       - run:
           name: BuildPushDockerImages
           command: |
-            echo $CIRCLE_BUILD_NUM
+            echo $CIRCLE_SHA1
             docker build -t jackula83/multi-client:latest -t jackula83/multi-client:$CIRCLE_SHA1 ./client
             docker build -t jackula83/multi-server:latest -t jackula83/multi-server:$CIRCLE_SHA1 ./server
             docker build -t jackula83/multi-worker:latest -t jackula83/multi-worker:$CIRCLE_SHA1 ./worker
@@ -32,38 +104,62 @@ jobs:
             docker push jackula83/multi-client:$CIRCLE_SHA1
             docker push jackula83/multi-server:$CIRCLE_SHA1
             docker push jackula83/multi-worker:$CIRCLE_SHA1
-  deploy:
-    description: Deploy application to Google Kubernetes Engine
-    machine: true
+
+  install_and_initialize_cli:
+    description: Install doctl and initialize to connect to DigitalOcean
+    executor: <<parameters.executor>>
+    parameters:
+      cluster:
+        default: geekmotors-main-env # this was friggin missing from the documentation!
+        description: 'The Kubernetes cluster name.'
+        type: string
+      digitalocean-access-token:
+        default: DIGITALOCEAN_ACCESS_TOKEN
+        description: The access token to connect DigitalOcean
+        type: env_var_name
+      executor:
+        default: golang
+        description: |
+          Executor to use for this job. Defaults to this orb's default executor.
+        type: executor
     steps:
-      - checkout
-      # Install `gcloud` and `kubectl` if not already installed.
-      - gcp-gke/install
-      # Initialize the `gcloud` CLI.
-      - gcp-gke/init
-      # Disable prompts
-      - run:
-          name: SetupDeploymentEnvironment
-          command: echo 'export CLOUDSDK_CORE_DISABLE_PROMPTS=1' >> $BASH_ENV
-      # Configure and apply all k8s config files
-      - run:
-          name: ApplyK8sConfig
-          command: |
-            gcloud container clusters get-credentials vortex-cluster
-            kubectl apply -f k8s
-      - run: echo $CIRCLE_SHA1
-      # Update a deployment Docker images.
-      - run:
-          name: UpdateDeployments
-          command: |
-            gcloud container clusters get-credentials vortex-cluster
-            kubectl set image deployment/server-deployment server=jackula83/multi-server:$CIRCLE_SHA1
-            kubectl set image deployment/client-deployment client=jackula83/multi-client:$CIRCLE_SHA1
-            kubectl set image deployment/worker-deployment worker=jackula83/multi-worker:$CIRCLE_SHA1
+      - install
+      - initialize:
+          cluster: geekmotors-main-cluster
+          digitalocean-access-token: <<parameters.digitalocean-access-token>>
+
+  deploy:
+    description: Deploy application to DigitalOcean Kubernetes
+    # re-install for deployment
+    executor: <<parameters.executor>>
+    parameters:
+      cluster:
+        default: geekmotors-main-env
+        description: 'The Kubernetes cluster name.'
+        type: string
+      digitalocean-access-token:
+        default: DIGITALOCEAN_ACCESS_TOKEN
+        description: The access token to connect DigitalOcean
+        type: env_var_name
+      executor:
+        default: golang
+        description: |
+          Executor to use for this job. Defaults to this orb's default executor.
+        type: executor
+    steps:
+      - install
+      - initialize:
+          cluster: geekmotors-main-cluster
+          digitalocean-access-token: <<parameters.digitalocean-access-token>>
+      - deploy
+
 workflows:
   build_update_deploy:
     jobs:
       - build
-      - deploy:
+      - install_and_initialize_cli:
           requires:
             - build
+      - deploy:
+          requires:
+            - install_and_initialize_cli
