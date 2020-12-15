@@ -66,7 +66,7 @@ jobs:
     executor: <<parameters.executor>>
     parameters:
       cluster:
-        default: geekmotors-main-env
+        default: geekmotors-main-env # this was friggin missing from the documentation!
         description: 'The Kubernetes cluster name.'
         type: string
       digitalocean-access-token:
@@ -82,7 +82,7 @@ jobs:
       - install
       - initialize:
           cluster: geekmotors-main-cluster
-          digitalocean-access-token: $DIGITALOCEAN_ACCESS_TOKEN
+          digitalocean-access-token: <<parameters.digitalocean-access-token>>
 
   deploy:
     description: Deploy application to DigitalOcean Kubernetes
