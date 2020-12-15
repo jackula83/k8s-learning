@@ -72,7 +72,7 @@ workflows:
     jobs:
       # - build
       - install_and_initialize_cli
-      - deploy
+      deploy:
           requires:
             - install_and_initialize_cli
         #   - build
