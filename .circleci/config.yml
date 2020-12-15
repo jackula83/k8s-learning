@@ -132,8 +132,6 @@ jobs:
 
   deploy:
     description: Deploy application to DigitalOcean Kubernetes
-    machine: true
-
     # re-install for deployment
     executor: <<parameters.executor>>
     parameters:
