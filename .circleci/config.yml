@@ -15,7 +15,7 @@ commands:
     description: 'Initialize kubeconfig to connect to DigitalOcean Kubernetes Engine'
     parameters:
       cluster:
-        description: 'geekmotors-main-cluster'
+        description: geekmotors-main-cluster
         type: string
     steps:
       - run: |
@@ -46,7 +46,10 @@ jobs:
     machine: true
     description: |
       Install doctl and initialize to connect to DigitalOcean
-    cluster: geekmotors-main-cluster
+    parameters:
+      cluster:
+        description: geekmotors-main-cluster
+        type: string
     steps:
       - install
       - initialize:
