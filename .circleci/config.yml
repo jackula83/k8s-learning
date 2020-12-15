@@ -41,7 +41,7 @@ jobs:
   install_and_initialize_cli:
     parameters:
       cluster:
-        description: "geekmotors-main-cluster"
+        description: 'geekmotors-main-cluster'
     steps:
       - install
       - initialize:
@@ -72,7 +72,7 @@ workflows:
     jobs:
       # - build
       - install_and_initialize_cli
-      deploy:
+      - deploy:
           requires:
             - install_and_initialize_cli
         #   - build
