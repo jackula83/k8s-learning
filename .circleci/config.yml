@@ -45,7 +45,7 @@ jobs:
   install_and_initialize_cli:
      description: |
       Install doctl and initialize to connect to DigitalOcean
-    executor: <<parameters.executor>>
+    executor: parameters.executor
     parameters:
       cluster:
         description: "The Kubernetes cluster name."
@@ -62,7 +62,7 @@ jobs:
     steps:
       - install
       - initialize:
-          cluster: <<parameters.cluster>>
+          cluster: parameters.cluster
           digitalocean-access-token: $DIGITALOCEAN_ACCESS_TOKEN
 
   deploy:
