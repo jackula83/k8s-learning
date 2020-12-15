@@ -43,14 +43,14 @@ commands:
           name: ApplyK8sConfig
           command: |
             kubectl apply -f k8s
-      - run: echo $CIRCLE_BUILD_NUM
+      - run: echo $CIRCLE_SHA1
       # Update a deployment Docker images.
       - run:
           name: UpdateDeployments
           command: |
-            kubectl set image deployment/server-deployment server=jackula83/multi-server:$CIRCLE_BUILD_NUM
-            kubectl set image deployment/client-deployment client=jackula83/multi-client:$CIRCLE_BUILD_NUM
-            kubectl set image deployment/worker-deployment worker=jackula83/multi-worker:$CIRCLE_BUILD_NUM
+            kubectl set image deployment/server-deployment server=jackula83/multi-server:$CIRCLE_SHA1
+            kubectl set image deployment/client-deployment client=jackula83/multi-client:$CIRCLE_SHA1
+            kubectl set image deployment/worker-deployment worker=jackula83/multi-worker:$CIRCLE_SHA1
 
 executors:
   golang:
@@ -93,17 +93,17 @@ jobs:
       - run:
           name: BuildPushDockerImages
           command: |
-            echo $CIRCLE_BUILD_NUM
-            docker build -t jackula83/multi-client:latest -t jackula83/multi-client:$CIRCLE_BUILD_NUM ./client
-            docker build -t jackula83/multi-server:latest -t jackula83/multi-server:$CIRCLE_BUILD_NUM ./server
-            docker build -t jackula83/multi-worker:latest -t jackula83/multi-worker:$CIRCLE_BUILD_NUM ./worker
+            echo $CIRCLE_SHA1
+            docker build -t jackula83/multi-client:latest -t jackula83/multi-client:$CIRCLE_SHA1 ./client
+            docker build -t jackula83/multi-server:latest -t jackula83/multi-server:$CIRCLE_SHA1 ./server
+            docker build -t jackula83/multi-worker:latest -t jackula83/multi-worker:$CIRCLE_SHA1 ./worker
             echo $DOCKERHUB_PASSWORD | docker login -u $DOCKER_USER --password-stdin docker.io
             docker push jackula83/multi-client:latest
             docker push jackula83/multi-server:latest
             docker push jackula83/multi-worker:latest
-            docker push jackula83/multi-client:$CIRCLE_BUILD_NUM
-            docker push jackula83/multi-server:$CIRCLE_BUILD_NUM
-            docker push jackula83/multi-worker:$CIRCLE_BUILD_NUM
+            docker push jackula83/multi-client:$CIRCLE_SHA1
+            docker push jackula83/multi-server:$CIRCLE_SHA1
+            docker push jackula83/multi-worker:$CIRCLE_SHA1
 
   install_and_initialize_cli:
     description: Install doctl and initialize to connect to DigitalOcean
@@ -156,9 +156,9 @@ jobs:
 workflows:
   build_update_deploy:
     jobs:
-      - build
       - install_and_initialize_cli
-      - deploy:
           requires:
             - build
+      - deploy:
+          requires:
             - install_and_initialize_cli
