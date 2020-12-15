@@ -3,6 +3,20 @@ description: DigitalOcean Kubernetes Engine Orb
 orbs:
   doctl: digitalocean/cli@0.1.1
   k8s: circleci/kubernetes@0.1.0
+
+commands:
+  install:
+    steps:
+      - doctl/install
+      - k8s/install
+  initialize:
+    parameters:
+      cluster:
+        description: 'geekmotors-main-cluster'
+    steps:
+      - run: |
+          doctl kubernetes cluster kubeconfig save geekmotors-main-cluster
+
 jobs:
   #   build:
   #     machine: true
@@ -23,20 +37,21 @@ jobs:
   #             docker push jackula83/multi-client:$CIRCLE_BUILD_NUM
   #             docker push jackula83/multi-server:$CIRCLE_BUILD_NUM
   #             docker push jackula83/multi-worker:$CIRCLE_BUILD_NUM
+
+  install_and_initialize_cli:
+    parameters:
+      cluster:
+        description: "geekmotors-main-cluster"
+    steps:
+      - install
+      - initialize:
+        cluster: geekmotors-main-cluster
+
   deploy:
     description: Deploy application to DigitalOcean Kubernetes
     machine: true
     steps:
       - checkout
-      # Install `doctl` and `kubectl` if not already installed.
-      - doctl/install
-      - k8s/install
-      # Initialise doctl
-      - initialize:
-          parameters:
-          cluster:
-            description: 'geekmotors-main-cluster'
-            type: string
       # Configure and apply all k8s config files
       - run:
           name: ApplyK8sConfig
@@ -56,6 +71,8 @@ workflows:
   build_update_deploy:
     jobs:
       # - build
+      - install_and_initialize_cli
       - deploy
-        # requires:
+          requires:
+            - install_and_initialize_cli
         #   - build
