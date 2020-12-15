@@ -16,6 +16,7 @@ commands:
 
       - doctl/install
       - k8s/install
+
   initialize:
     description: 'Initialize kubeconfig to connect to DigitalOcean Kubernetes Engine'
     parameters:
@@ -31,6 +32,27 @@ commands:
           digitalocean-access-token: <<parameters.digitalocean-access-token>>
       - run: |
           doctl kubernetes cluster kubeconfig save geekmotors-main-cluster
+
+  deploy:
+    description: 'Deployment command'
+    steps:
+      - checkout
+
+      # Configure and apply all k8s config files
+      - run:
+          name: ApplyK8sConfig
+          command: |
+            doctl kubernetes cluster kubeconfig save geekmotors-main-cluster
+            kubectl apply -f k8s
+      - run: echo $CIRCLE_BUILD_NUM
+      # Update a deployment Docker images.
+      - run:
+          name: UpdateDeployments
+          command: |
+            doctl kubernetes cluster kubeconfig save geekmotors-main-cluster
+            kubectl set image deployment/server-deployment server=jackula83/multi-server:latest
+            kubectl set image deployment/client-deployment client=jackula83/multi-client:latest
+            kubectl set image deployment/worker-deployment worker=jackula83/multi-worker:latest
 
 executors:
   golang:
@@ -111,23 +133,29 @@ jobs:
   deploy:
     description: Deploy application to DigitalOcean Kubernetes
     machine: true
+
+    # re-install for deployment
+    executor: <<parameters.executor>>
+    parameters:
+      cluster:
+        default: geekmotors-main-env
+        description: 'The Kubernetes cluster name.'
+        type: string
+      digitalocean-access-token:
+        default: DIGITALOCEAN_ACCESS_TOKEN
+        description: The access token to connect DigitalOcean
+        type: env_var_name
+      executor:
+        default: golang
+        description: |
+          Executor to use for this job. Defaults to this orb's default executor.
+        type: executor
     steps:
-      - checkout
-      # Configure and apply all k8s config files
-      - run:
-          name: ApplyK8sConfig
-          command: |
-            doctl kubernetes cluster kubeconfig save geekmotors-main-cluster
-            kubectl apply -f k8s
-      - run: echo $CIRCLE_BUILD_NUM
-      # Update a deployment Docker images.
-      - run:
-          name: UpdateDeployments
-          command: |
-            doctl kubernetes cluster kubeconfig save geekmotors-main-cluster
-            kubectl set image deployment/server-deployment server=jackula83/multi-server:latest
-            kubectl set image deployment/client-deployment client=jackula83/multi-client:latest
-            kubectl set image deployment/worker-deployment worker=jackula83/multi-worker:latest
+      - install
+      - initialize:
+          cluster: geekmotors-main-cluster
+          digitalocean-access-token: <<parameters.digitalocean-access-token>>
+      - deploy
 
 workflows:
   build_update_deploy:
