@@ -43,12 +43,12 @@ jobs:
   #             docker push jackula83/multi-worker:$CIRCLE_BUILD_NUM
 
   install_and_initialize_cli:
-     description: |
+    description: |
       Install doctl and initialize to connect to DigitalOcean
-    executor: default
+    executor: <<parameters.executor>>
     parameters:
       cluster:
-        description: "The Kubernetes cluster name."
+        description: 'The Kubernetes cluster name.'
         type: string
       digitalocean-access-token:
         default: DIGITALOCEAN_ACCESS_TOKEN
