@@ -3,7 +3,7 @@ description: DigitalOcean Kubernetes Engine Orb
 orbs:
   doctl: digitalocean/cli@0.1.1
   k8s: circleci/kubernetes@0.1.0
-  # jobs:
+jobs:
   #   build:
   #     machine: true
   #     steps:
