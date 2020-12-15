@@ -85,25 +85,25 @@ executors:
         type: string
 
 jobs:
-    build:
-      machine: true
-      steps:
-        - checkout
-        # build and push Docker image
-        - run:
-            name: BuildPushDockerImages
-            command: |
-              echo $CIRCLE_BUILD_NUM
-              docker build -t jackula83/multi-client:latest -t jackula83/multi-client:$CIRCLE_BUILD_NUM ./client
-              docker build -t jackula83/multi-server:latest -t jackula83/multi-server:$CIRCLE_BUILD_NUM ./server
-              docker build -t jackula83/multi-worker:latest -t jackula83/multi-worker:$CIRCLE_BUILD_NUM ./worker
-              echo $DOCKERHUB_PASSWORD | docker login -u $DOCKER_USER --password-stdin docker.io
-              docker push jackula83/multi-client:latest
-              docker push jackula83/multi-server:latest
-              docker push jackula83/multi-worker:latest
-              docker push jackula83/multi-client:$CIRCLE_BUILD_NUM
-              docker push jackula83/multi-server:$CIRCLE_BUILD_NUM
-              docker push jackula83/multi-worker:$CIRCLE_BUILD_NUM
+  build:
+    machine: true
+    steps:
+      - checkout
+      # build and push Docker image
+      - run:
+          name: BuildPushDockerImages
+          command: |
+            echo $CIRCLE_BUILD_NUM
+            docker build -t jackula83/multi-client:latest -t jackula83/multi-client:$CIRCLE_BUILD_NUM ./client
+            docker build -t jackula83/multi-server:latest -t jackula83/multi-server:$CIRCLE_BUILD_NUM ./server
+            docker build -t jackula83/multi-worker:latest -t jackula83/multi-worker:$CIRCLE_BUILD_NUM ./worker
+            echo $DOCKERHUB_PASSWORD | docker login -u $DOCKER_USER --password-stdin docker.io
+            docker push jackula83/multi-client:latest
+            docker push jackula83/multi-server:latest
+            docker push jackula83/multi-worker:latest
+            docker push jackula83/multi-client:$CIRCLE_BUILD_NUM
+            docker push jackula83/multi-server:$CIRCLE_BUILD_NUM
+            docker push jackula83/multi-worker:$CIRCLE_BUILD_NUM
 
   install_and_initialize_cli:
     description: Install doctl and initialize to connect to DigitalOcean
@@ -156,9 +156,9 @@ jobs:
 workflows:
   build_update_deploy:
     jobs:
-      # - build
+      - build
       - install_and_initialize_cli
       - deploy:
           requires:
+            - build
             - install_and_initialize_cli
-      #   - build
