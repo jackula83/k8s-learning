@@ -156,7 +156,7 @@ jobs:
 workflows:
   build_update_deploy:
     jobs:
-      - install_and_initialize_cli
+      - install_and_initialize_cli:
           requires:
             - build
       - deploy:
