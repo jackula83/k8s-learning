@@ -17,15 +17,6 @@ commands:
       cluster:
         description: 'The kubernetes cluster name'
         type: string
-      digitalocean-access-token:
-        default: DIGITALOCEAN_ACCESS_TOKEN
-        description: The access token to connect DigitalOcean
-        type: env_var_name
-      executor:
-        default: default
-        description: |
-          Executor to use for this job. Defaults to this orb's default executor.
-        type: executor
     steps:
       - run: |
           doctl kubernetes cluster kubeconfig save geekmotors-main-cluster
@@ -52,17 +43,27 @@ jobs:
   #             docker push jackula83/multi-worker:$CIRCLE_BUILD_NUM
 
   install_and_initialize_cli:
-    machine: true
-    description: |
+     description: |
       Install doctl and initialize to connect to DigitalOcean
+    executor: <<parameters.executor>>
     parameters:
       cluster:
-        description: 'The kubernetes cluster name'
+        description: "The Kubernetes cluster name."
         type: string
+      digitalocean-access-token:
+        default: DIGITALOCEAN_ACCESS_TOKEN
+        description: The access token to connect DigitalOcean
+        type: env_var_name
+      executor:
+        default: default
+        description: |
+          Executor to use for this job. Defaults to this orb's default executor.
+        type: executor
     steps:
       - install
       - initialize:
-          cluster: geekmotors-main-cluster
+          cluster: <<parameters.cluster>>
+          digitalocean-access-token: $DIGITALOCEAN_ACCESS_TOKEN
 
   deploy:
     description: Deploy application to DigitalOcean Kubernetes
@@ -86,10 +87,6 @@ jobs:
             kubectl set image deployment/worker-deployment worker=jackula83/multi-worker:latest
 
 workflows:
-  pre_steps:
-    commands:
-      - install
-      - initialize
   build_update_deploy:
     jobs:
       # - build
