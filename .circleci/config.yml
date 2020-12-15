@@ -15,9 +15,15 @@ commands:
     description: 'Initialize kubeconfig to connect to DigitalOcean Kubernetes Engine'
     parameters:
       cluster:
-        description: 'The kubernetes cluster name'
+        description: 'The Kubernetes cluster name.'
         type: string
+      digitalocean-access-token:
+        default: DIGITALOCEAN_ACCESS_TOKEN
+        description: The access token to connect DigitalOcean
+        type: env_var_name
     steps:
+      - doctl/initialize:
+          digitalocean-access-token: <<parameters.digitalocean-access-token>>
       - run: |
           doctl kubernetes cluster kubeconfig save geekmotors-main-cluster
 
@@ -91,7 +97,7 @@ workflows:
     jobs:
       # - build
       - install_and_initialize_cli
-      - deploy:
-          requires:
-            - install_and_initialize_cli
-        #   - build
+      # - deploy:
+      #     requires:
+      #       - install_and_initialize_cli
+      #   - build
