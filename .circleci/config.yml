@@ -17,6 +17,15 @@ commands:
       cluster:
         description: 'The kubernetes cluster name'
         type: string
+      digitalocean-access-token:
+        default: DIGITALOCEAN_ACCESS_TOKEN
+        description: The access token to connect DigitalOcean
+        type: env_var_name
+      executor:
+        default: default
+        description: |
+          Executor to use for this job. Defaults to this orb's default executor.
+        type: executor
     steps:
       - run: |
           doctl kubernetes cluster kubeconfig save geekmotors-main-cluster
