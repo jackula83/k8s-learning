@@ -55,7 +55,7 @@ orbs:
 workflows:
   build_update_deploy:
     jobs:
-      - build
-      - deploy:
-          requires:
-            - build
+      # - build
+      - deploy
+        # requires:
+        #   - build
