@@ -46,10 +46,7 @@ jobs:
     machine: true
     description: |
       Install doctl and initialize to connect to DigitalOcean
-    parameters:
-      cluster:
-        description: 'geekmotors-main-cluster'
-        type: string
+    cluster: geekmotors-main-cluster
     steps:
       - install
       - initialize:
