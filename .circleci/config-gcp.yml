@@ -1,0 +1,69 @@
+version: 2.1
+orbs:
+  node: circleci/node@1.0.1
+  gcp-gke: circleci/gcp-gke@0.1.0
+  gcr: circleci/gcp-gcr@0.0.2
+jobs:
+  build:
+    machine: true
+    # docker:
+    #   - image: jackula83/multi-client
+    #   - image: jackula83/multi-server
+    #   - image: jackula83/multi-worker
+    # auth:
+    #   username: jackula83
+    #   password: $DOCKERHUB_PASSWORD
+    steps:
+      - checkout
+      # - setup_remote_docker:
+      #     version: 19.03.13
+      # build and push Docker image
+      - run:
+          name: BuildPushDockerImages
+          command: |
+            echo $CIRCLE_BUILD_NUM
+            docker build -t jackula83/multi-client:latest -t jackula83/multi-client:$CIRCLE_BUILD_NUM ./client
+            docker build -t jackula83/multi-server:latest -t jackula83/multi-server:$CIRCLE_BUILD_NUM ./server
+            docker build -t jackula83/multi-worker:latest -t jackula83/multi-worker:$CIRCLE_BUILD_NUM ./worker
+            echo $DOCKERHUB_PASSWORD | docker login -u $DOCKER_USER --password-stdin docker.io
+            docker push jackula83/multi-client:latest
+            docker push jackula83/multi-server:latest
+            docker push jackula83/multi-worker:latest
+            docker push jackula83/multi-client:$CIRCLE_BUILD_NUM
+            docker push jackula83/multi-server:$CIRCLE_BUILD_NUM
+            docker push jackula83/multi-worker:$CIRCLE_BUILD_NUM
+  deploy:
+    description: Deploy application to Google Kubernetes Engine
+    machine: true
+    steps:
+      - checkout
+      # Install `gcloud` and `kubectl` if not already installed.
+      - gcp-gke/install
+      # Initialize the `gcloud` CLI.
+      - gcp-gke/init
+      # Disable prompts
+      - run:
+          name: SetupDeploymentEnvironment
+          command: echo 'export CLOUDSDK_CORE_DISABLE_PROMPTS=1' >> $BASH_ENV
+      # Configure and apply all k8s config files
+      - run:
+          name: ApplyK8sConfig
+          command: |
+            gcloud container clusters get-credentials vortex-cluster
+            kubectl apply -f k8s
+      - run: echo $CIRCLE_BUILD_NUM
+      # Update a deployment Docker images.
+      - run:
+          name: UpdateDeployments
+          command: |
+            gcloud container clusters get-credentials vortex-cluster
+            kubectl set image deployment/server-deployment server=jackula83/multi-server:$CIRCLE_BUILD_NUM
+            kubectl set image deployment/client-deployment client=jackula83/multi-client:$CIRCLE_BUILD_NUM
+            kubectl set image deployment/worker-deployment worker=jackula83/multi-worker:$CIRCLE_BUILD_NUM
+workflows:
+  build_update_deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build

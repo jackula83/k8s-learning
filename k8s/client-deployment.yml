@@ -17,3 +17,9 @@ spec:
           image: jackula83/multi-client
           ports:
             - containerPort: 3000
+          # limit of CPU for cheapskate like me
+          # resources:
+          #   limits:
+          #     cpu: 50m
+          #   requests:
+          #     cpu: 50m
